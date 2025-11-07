@@ -30,7 +30,7 @@ MANIFEST
 data/
 
 #db files
-db/
+# db/
 
 #torch files
 *.pt

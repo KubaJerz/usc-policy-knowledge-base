@@ -13,10 +13,11 @@ def query_vector_store(vector_store, query, k=3):
 def filter_results_by_score(results, threshold=0.3):
     filtered = []
     for doc, score in results:
-        if score < threshold:
+        if score > threshold:
             print(f"SKIPPING: Document: {doc.metadata} Score: {score}")
         else:
-            filtered.append((doc, score))
+            filtered.append(doc)
+
     return filtered
 
 def do_rag(vector_store, query, k=3, score_threshold=0.3):
@@ -55,21 +56,24 @@ def main():
         raw_query = input("You: ")
 
         #send mesg to vec db
-        context_docs = do_rag(load_vector_store, raw_query, k=3, score_threshold=0.3)
+        context_docs = do_rag(load_vector_store, raw_query, k=3, score_threshold=0.75)
         # make context out of docs
-        context = "".join([doc.page_content for doc, score in context_docs])
+        if context_docs:
+            context = "".join([doc.page_content for doc in context_docs])
+        else:
+            context = "No relevant documents found for your query."
 
         #append context to mesg
-        query = f"context: {context}\n\n question: {raw_query}\n\n" 
+        query = f"context: {context}\n\n Users actual question: {raw_query}\n\n" 
 
         #send to model
         res = llm.invoke(chats + [HumanMessage(content=query)])
         #print response
-        print(f"Assistant: {res.content}\n")
+        print(f"\n\nAssistant: {res}\n")
 
         #add all to chat history
         chats.append(HumanMessage(content=query))
-        chats.append(AIMessage(content=res.content))
+        chats.append(AIMessage(content=res))
 
 if __name__ == "__main__":
     main()
